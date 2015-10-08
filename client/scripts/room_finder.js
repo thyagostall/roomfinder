@@ -15,11 +15,15 @@ function getCourses(callback) {
 }
 
 function saveCourse(data) {
-  console.log(data);
+  print(data)
+
+  $.post("/importdata", function(data) {
+    console.log(data);
+  }, "json");
 }
 
 function parseSchedule(data) {
-  return data.match(/[0-9][A-Z][0-9]\((\w*[\-]\w*)\)/g);
+  return data.match(/[0-9][A-Z][0-9]\((\w+[\-]\w+)\)/g);
 }
 
 function parseProfessors(data) {

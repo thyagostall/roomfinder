@@ -4,6 +4,6 @@ from django.contrib import admin
 from . import views
 
 urlpatterns = [
-    url(r'^findroomat/(?P<schedule>\w)', views.find_room_at),
-    url(r'^importdata/', views.import_data)
+    url(r'^findroomat/(?P<schedule>\w*)', views.find_room_at),
+    url(r'^importdata/(?P<admin_id>\w*)', views.import_data)
 ]

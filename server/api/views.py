@@ -20,10 +20,10 @@ def find_room_at(request, schedule):
     return render('Find room at')
 
 def import_data(request, admin_id):
-    if admin_id == 'this_is_the_admin_id':
-        return render('Admin ID OK!')
+    if admin_id == 'thyago':
+        return HttpResponse('Admin ID OK!')
     else:
-        return render('Admin ID Verification Failed!')
+        return HttpResponse('Admin ID Verification Failed!')
 
 def get_table(data):
     i = data.index("<table border")

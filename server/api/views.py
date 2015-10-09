@@ -1,39 +1,97 @@
-from django.shortcuts import render
 from urllib.request import urlopen
 from django.http import HttpResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
+from django.views.generic import View
 
-# Algorithm
-#
-# Find all course codes
-# For all courses download the page of open classes
-# For all classes of that course, parse the table and find classes, room, schedule relation
+from . import models
 
-# 99AA296C0D2435C64E67391C68F77EC7.html --> eng mecanica
+import json
 
-# [0-9][A-Z][0-9]\((\w*[\-]\w*)\)
-# [A-Z]{2}[0-9]([A-Z]|[0-9])[A-Z]
 
-def index(request):
-    return render('BCT')
+class FindFreeRoomAt(View):
+    def get(self, request, time):
+        return HttpResponse('There is a free room in your face!')
 
-def find_room_at(request, schedule):
-    return render('Find room at')
 
-def import_data(request, admin_id):
-    if admin_id == 'thyago':
-        return HttpResponse('Admin ID OK!')
-    else:
-        return HttpResponse('Admin ID Verification Failed!')
+class ImportData(View):
+    @method_decorator(csrf_exempt)
+    def dispatch(self, request, *args, **kwargs):
+        return super(ImportData, self).dispatch(request, *args, **kwargs)
 
-def get_table(data):
-    i = data.index("<table border")
-    j = data.index("</body>")
-    return data[i:j]
+    def get(self, request):
+        majors = get_majors()
+
+        result = ""
+        for major in majors:
+            page = urlopen("https://utfws.utfpr.edu.br/rptacad/" + major)
+
+            table = page.read().decode("iso-8859-1")
+            start = table.index("<table border")
+            end = table.index("</body>")
+            table = table[start:end]
+
+            result += table
+
+        return HttpResponse(result)
+
+    def post(self, request):
+        data = json.loads(request.body.decode("utf-8"))
+        parse_courses(data)
+        return HttpResponse('Data saved successfully!')
+
+
+def parse_professors(db_session, new_professors):
+    db_session.professors.clear()
+
+    for new_professor in new_professors:
+        dataset = models.Professor.objects.filter(name=new_professor)
+
+        if dataset:
+            db_professor = dataset[0]
+        else:
+            db_professor = models.Professor(name=new_professor)
+            db_professor.save()
+
+        db_session.professors.add(db_professor)
+
+
+def parse_courses(courses):
+    for course in courses:
+        dataset_course = models.Course.objects.filter(code=course['courseCode'])
+
+        if dataset_course:
+            db_course = dataset_course[0]
+        else:
+            db_course = models.Course(code=course['courseCode'], name=course['courseName'])
+            db_course.save()
+
+        sessions = course['courseSessions']
+        for session in sessions:
+            dataset_sessions = models.Session.objects.filter(code=session['session'], course=db_course)
+
+            if dataset_sessions:
+                db_session = dataset_sessions[0]
+            else:
+                db_session = models.Session(code=session['session'], course=db_course)
+                db_session.save()
+                
+            if session['professor']:
+                parse_professors(db_session, session['professor'])
+
+            schedules = session['schedule']
+            if schedules:
+                for schedule in schedules:
+                    dataset_schedules = models.Schedule.objects.filter(session=db_session, time=schedule['time'], room=schedule['room'])
+
+                    if dataset_schedules:
+                        db_schedule = dataset_schedules[0]
+                    else:
+                        db_schedule = models.Schedule(session=db_session, time=schedule['time'], room=schedule['room'])
+                        db_schedule.save()
+
 
 def get_majors():
-    return [
-        "10B1365A17409CCE0B0DC14DD0A94696.html"
-        ]
     return [
         "10B1365A17409CCE0B0DC14DD0A94696.html",
         "AB08BD77DCD4D4E4D836E89250B262B0.html",
@@ -83,14 +141,3 @@ def get_majors():
         "04DB9C52B7274D62548D936E3974B145.html",
         "6B384DDCAC2656AC221224F912DCD8D1.html",
         "4BCA735384846DA335630A521579F0CC.html"]
-
-def get_data(request):
-    majors = get_majors()
-
-    result = ""
-    for major in majors:
-        page = urlopen("https://utfws.utfpr.edu.br/rptacad/" + major)
-        table = get_table(page.read().decode("iso-8859-1"))
-        result += table
-
-    return HttpResponse(result)

@@ -11,8 +11,9 @@ class Professor(models.Model):
 class Session(models.Model):
     code = models.CharField(max_length=5)
     course = models.ForeignKey(Course)
+    professors = models.ManyToManyField(Professor)
 
 class Schedule(models.Model):
     time = models.CharField(max_length=5)
     room = models.CharField(max_length=10)
-    professors = models.ManyToManyField(Professor)
+    session = models.ForeignKey(Session)

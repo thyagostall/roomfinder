@@ -1,43 +1,49 @@
-// Algorithm
-//
-// Find all course codes
-// For all courses download the page of open classes
-// For all classes of that course, parse the table and find classes, room, schedule relation
-//
-// [0-9][A-Z][0-9]\((\w*[\-]\w*)\)
+var BASE_URL = "http://localhost:8000/api/"
 
 function getCourses(callback) {
-  $.get("http://localhost:8000/api/getdata/", callback);
+  $.get(BASE_URL + "importdata/", callback);
 }
 
 function saveData(data) {
-  $.post("/importdata", data, function(result) {
-    console.log(result);
-  }, "json");
+  $.post(BASE_URL + "importdata/", JSON.stringify(data));
+}
+
+function searchFreeRooms(data, success) {
+  $.get(BASE_URL + "freeroomat/" + data.time, success);
 }
 
 function parseSchedule(data) {
-  return data.match(/[0-9][A-Z][0-9]\((\w+[\-]\w+)\)/g);
+  schedules = data.match(/[0-9][A-Z][0-9]\((\w+[\-]\w+)\)/g);
+
+  for (var i = 0; schedules && i < schedules.length; i++) {
+    var temp = schedules[i].split('(');
+    schedules[i] = {time: temp[0], room: temp[1].replace(")", "")};
+  }
+
+  return schedules;
 }
 
 function parseProfessors(data) {
   var result = [];
   var data = data.split('\n');
 
-  for (var i; i < data.size(); i++) {
+  for (var i = 0; i < data.length; i++) {
     data[i] = $.trim(data[i]);
-    if (data[i])
+
+    if (data[i] != "")
       result.push(data[i])
   }
+
+  return result;
 }
 
 function fillInData(data) {
   var courseName, courseCode = "";
   var courses = [];
 
-  for (var i = 0; i < lines.size(); i++) {
+  for (var i = 0; i < lines.length; i++) {
     var header = $(lines[i]).find('td.curso')
-    if (header.size() > 0) {
+    if (header.length > 0) {
       if (courseCode != "") {
         courses.push({courseCode, courseName, courseSessions});
       }
@@ -64,12 +70,7 @@ function fillInData(data) {
     }
   }
 
-  if (courses.size() > 0) {
+  if (courses.length > 0) {
     saveData(courses);
   }
 }
-
-getCourses(function(result) {
-  lines = $('tr', result);
-  fillInData(lines);
-});

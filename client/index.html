@@ -5,11 +5,22 @@
     <title>Room Finder</title>
   </head>
   <body>
-    <p>
-      Test
+    <form>
+      <div class="form-group">
+        <label for="exampleInputEmail1">Time</label>
+        <input type="email" class="form-control" id="exampleInputEmail1" placeholder="Time">
+      </div>
+    </form>
+    <button id="confirm" class="btn btn-default" onclick="confirmButtonClick()">Confirmar</button>
+
+    <button id="import" class="btn btn-default" onclick="importButtonClick()">Importar dados</button>
+
+    <p id="result">
+      No data.
     </p>
 
-    <script type="text/javascript" src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+    <script type="text/javascript" src="./bower_components/jquery/dist/jquery.min.js"></script>
     <script type="text/javascript" src="./scripts/room_finder.js"></script>
+    <script type="text/javascript" src="./scripts/page_handler.js"></script>
   </body>
 </html>

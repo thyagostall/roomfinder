@@ -10,8 +10,18 @@ import json
 
 
 class FindFreeRoomAt(View):
+    @method_decorator(csrf_exempt)
+    def dispatch(self, request, *args, **kwargs):
+        return super(FindFreeRoomAt, self).dispatch(request, *args, **kwargs)
+
     def get(self, request, time):
-        return HttpResponse('There is a free room in your face!')
+        result = {}
+
+        dataset_schedules = models.Schedule.objects.exclude(time=time)
+        for i, available in zip(range(len(dataset_schedules)), dataset_schedules):
+            result[i] = {available.room: available.time}
+
+        return HttpResponse(json.dumps(result), content_type="application/json")
 
 
 class ImportData(View):
@@ -56,6 +66,18 @@ def parse_professors(db_session, new_professors):
         db_session.professors.add(db_professor)
 
 
+def get_or_insert_room(room_number):
+    dataset = models.Room.objects.filter(number=room_number)
+
+    if dataset:
+        result = dataset[0]
+    else:
+        result = models.Room(number=room_number, locked=False)
+        result.save()
+
+    return result
+
+
 def parse_courses(courses):
     for course in courses:
         dataset_course = models.Course.objects.filter(code=course['courseCode'])
@@ -75,19 +97,20 @@ def parse_courses(courses):
             else:
                 db_session = models.Session(code=session['session'], course=db_course)
                 db_session.save()
-                
+
             if session['professor']:
                 parse_professors(db_session, session['professor'])
 
             schedules = session['schedule']
             if schedules:
                 for schedule in schedules:
-                    dataset_schedules = models.Schedule.objects.filter(session=db_session, time=schedule['time'], room=schedule['room'])
+                    db_room = get_or_insert_room(schedule['room'])
+                    dataset_schedules = models.Schedule.objects.filter(session=db_session, time=schedule['time'], room=db_room)
 
                     if dataset_schedules:
                         db_schedule = dataset_schedules[0]
                     else:
-                        db_schedule = models.Schedule(session=db_session, time=schedule['time'], room=schedule['room'])
+                        db_schedule = models.Schedule(session=db_session, time=schedule['time'], room=db_room)
                         db_schedule.save()
 
 

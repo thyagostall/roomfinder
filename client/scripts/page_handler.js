@@ -1,6 +1,11 @@
 function confirmButtonClick() {
-  var time = '4M2';
-  searchFreeRooms({time: time}, function(result) {
+  var time = $("#time")[0].value;
+  var current = $("#result")[0].innerText.split(",");
+
+  current = JSON.stringify(current);
+  console.log(current);
+
+  searchFreeRooms({time: time, currentRooms: current}, function(result) {
     $("#result")[0].innerText = result;
   });
 }

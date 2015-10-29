@@ -9,7 +9,7 @@ function saveData(data) {
 }
 
 function searchFreeRooms(data, success) {
-  $.get(BASE_URL + "freeroomat/" + data.time, success);
+  $.post(BASE_URL + "freeroomat/" + data.time, data.currentRooms, success, "json");
 }
 
 function parseSchedule(data) {

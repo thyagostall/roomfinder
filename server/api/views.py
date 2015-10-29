@@ -14,12 +14,28 @@ class FindFreeRoomAt(View):
     def dispatch(self, request, *args, **kwargs):
         return super(FindFreeRoomAt, self).dispatch(request, *args, **kwargs)
 
-    def get(self, request, time):
-        result = {}
+    def decode_body(self, body):
+        result = body.decode("utf-8")
+        result = json.loads(result)
 
-        dataset_schedules = models.Schedule.objects.exclude(time=time)
-        for i, available in zip(range(len(dataset_schedules)), dataset_schedules):
-            result[i] = {available.room: available.time}
+        if result[0] == "":
+            result = []
+
+        return result
+
+
+    def post(self, request, time):
+        data = self.decode_body(request.body)
+        busy_rooms = models.Schedule.objects.filter(time=time).values_list('room_id', flat=True)
+
+        if data:
+            free_rooms = models.Room.objects.exclude(id__in=busy_rooms).filter(number__in=data).exclude(locked=True).order_by('number')
+        else:
+            free_rooms = models.Room.objects.exclude(id__in=busy_rooms).exclude(locked=True).order_by('number')
+
+        result = []
+        for free_room in free_rooms:
+            result += [free_room.number]
 
         return HttpResponse(json.dumps(result), content_type="application/json")
 

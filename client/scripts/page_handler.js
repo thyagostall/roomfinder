@@ -1,5 +1,5 @@
 function confirmButtonClick() {
-  var time = $("#time")[0].value;
+  var time = $("#day")[0].value + $("#class")[0].value;
   var current = $("#result")[0].innerText.split(",");
 
   current = JSON.stringify(current);

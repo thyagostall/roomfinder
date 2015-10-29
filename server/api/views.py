@@ -81,6 +81,11 @@ def parse_professors(db_session, new_professors):
 
         db_session.professors.add(db_professor)
 
+rooms_locked = [
+    'A-204', 'A-205',
+    'B-204', 'B-205',
+    'D-PTO', 'U-FPR',
+]
 
 def get_or_insert_room(room_number):
     dataset = models.Room.objects.filter(number=room_number)
@@ -90,6 +95,9 @@ def get_or_insert_room(room_number):
     else:
         result = models.Room(number=room_number, locked=False)
         result.save()
+
+    if room_number in rooms_locked:
+        result.locked = True
 
     return result
 

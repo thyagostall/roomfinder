@@ -17,3 +17,7 @@ function importButtonClick() {
     $("#result").innerText = "Data transfered successfully";
   });
 }
+
+function clearButtonClick() {
+  $("#result")[0].innerText = "";
+}
